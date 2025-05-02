@@ -1,0 +1,18 @@
+[  
+ {  
+   "Path": "D:\\data\\",  
+   "FileSpecifier": "^.*\\.txt$",  
+   "ApplicationToLaunch": "notepad.exe",  
+   "IncludeSubdirectories": false,  
+   "Delay": 2500,  
+   "NotificationTypes": ["Created", "Changed", "Deleted", "Renamed"]  
+ },  
+ {  
+   "Path": "D:\\data\\a",  
+   "FileSpecifier": "^.*\\.log$",  
+   "ApplicationToLaunch": "notepad.exe",  
+   "IncludeSubdirectories": false,  
+   "Delay": 500,  
+   "NotificationTypes": ["Created", "Changed", "Deleted", "Renamed"]  
+ }  
+]
