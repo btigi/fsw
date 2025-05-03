@@ -3,6 +3,16 @@
 
 File System Watcher is a C# console application to trigger a command when on file changes.
 
+
+## Example use cases
+- Automatically archive large log files
+- Automatically backup or move saved files
+- Automatically convert or compress downloaded images
+- Automatically print saved documents
+- Automatically undelete files
+- Automatically unzip downloaded zip files
+- Monitor log files for errors
+
 ## Configuration
 
 The application is configured through a json file names `config.json`. The json file contains an array of WatcherConfig entries. Each entry consists of:
@@ -12,6 +22,7 @@ The application is configured through a json file names `config.json`. The json 
 - Application to launch - the full path of the application to launch. The application receives the full path to the file that triggers the monitor as the first argument
 - Include subdirectories - whether to include subdirectories
 - Delay - millisends to wait after the monitor is triggered before calling the application
+- QueueSize - the size of the queue to hold events before they are processed
 - Notification Types - array of monitoring events, possible values are: Created, Changed, Deleted, Renamed
 
 
@@ -25,6 +36,7 @@ An example `config.json` file is below:
    "ApplicationToLaunch": "notepad.exe",  
    "IncludeSubdirectories": false,  
    "Delay": 2500,  
+   "QueueSize": 50,
    "NotificationTypes": ["Created", "Changed", "Deleted", "Renamed"]  
  },  
  {  
@@ -33,6 +45,7 @@ An example `config.json` file is below:
    "ApplicationToLaunch": "notepad.exe",  
    "IncludeSubdirectories": false,  
    "Delay": 500,  
+   "QueueSize": 200,
    "NotificationTypes": ["Created", "Changed", "Deleted", "Renamed"]  
  }  
 ]

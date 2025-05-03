@@ -1,6 +1,5 @@
-﻿using System.Diagnostics;
+﻿using fsw;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 var configPath = @"config.json";
 if (!File.Exists(configPath))
@@ -11,9 +10,14 @@ if (!File.Exists(configPath))
 var configContent = File.ReadAllText(configPath);
 var configurations = JsonSerializer.Deserialize<List<WatcherConfig>>(configContent) ?? throw new InvalidOperationException("Invalid configuration format.");
 
+var tasks = new List<Task>();
+
 foreach (var config in configurations)
 {
-    var regex = new Regex(config.FileSpecifier, RegexOptions.IgnoreCase);
+    var cts = new CancellationTokenSource();
+    var channelQueue = new ChannelQueue(config.QueueSize);
+    var consumer = new Consumer(channelQueue, config);
+    tasks.Add(consumer.ExecuteAsync(cts.Token));
 
     var fsw = new FileSystemWatcher();
     var directoryPath = Path.GetDirectoryName(config.Path);
@@ -29,17 +33,7 @@ foreach (var config in configurations)
     {
         fsw.Created += async (s, e) =>
         {
-            await Task.Delay(config.Delay);
-
-            if (!string.IsNullOrEmpty(e.Name) && regex.IsMatch(e.Name))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = config.ApplicationToLaunch,
-                    Arguments = e.FullPath,
-                    UseShellExecute = true
-                });
-            }
+            await channelQueue.Produce(e);
         };
     }
 
@@ -47,17 +41,7 @@ foreach (var config in configurations)
     {
         fsw.Changed += async (s, e) =>
         {
-            await Task.Delay(config.Delay);
-
-            if (!string.IsNullOrEmpty(e.Name) && regex.IsMatch(e.Name))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = config.ApplicationToLaunch,
-                    Arguments = e.FullPath,
-                    UseShellExecute = true
-                });
-            }
+            await channelQueue.Produce(e);
         };
     }
 
@@ -65,17 +49,7 @@ foreach (var config in configurations)
     {
         fsw.Deleted += async (s, e) =>
         {
-            await Task.Delay(config.Delay);
-
-            if (!string.IsNullOrEmpty(e.Name) && regex.IsMatch(e.Name))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = config.ApplicationToLaunch,
-                    Arguments = e.FullPath,
-                    UseShellExecute = true
-                });
-            }
+            await channelQueue.Produce(e);
         };
     }
 
@@ -83,17 +57,7 @@ foreach (var config in configurations)
     {
         fsw.Renamed += async (s, e) =>
         {
-            await Task.Delay(config.Delay);
-
-            if (!string.IsNullOrEmpty(e.Name) && regex.IsMatch(e.Name))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = config.ApplicationToLaunch,
-                    Arguments = e.FullPath,
-                    UseShellExecute = true
-                });
-            }
+            await channelQueue.Produce(e);
         };
     }
 
@@ -110,5 +74,6 @@ public class WatcherConfig
     public string ApplicationToLaunch { get; set; } = string.Empty;
     public bool IncludeSubdirectories { get; set; } = false;
     public int Delay { get; set; } = 500;
+    public int QueueSize { get; set; } = 100;
     public List<string> NotificationTypes { get; set; } = new List<string>();
 }
